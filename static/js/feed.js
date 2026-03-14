@@ -31,14 +31,34 @@
       .catch(function () { updateBalanceDisplay(); });
   }
 
+  function getFilterGender() {
+    const male = document.getElementById('filterGenderMale')?.checked;
+    const female = document.getElementById('filterGenderFemale')?.checked;
+    const other = document.getElementById('filterGenderOther')?.checked;
+    if (male && !female && !other) return 'male';
+    if (female && !male && !other) return 'female';
+    if (other && !male && !female) return 'other';
+    return '';
+  }
+
+  function ageMaxSliderToAge(sliderPos) {
+    if (sliderPos <= 0) return 18;
+    return Math.round(18 * Math.pow(1000 / 18, sliderPos / 100));
+  }
+  function ageMaxAgeToSlider(age) {
+    if (age <= 18) return 0;
+    return Math.round(100 * Math.log(age / 18) / Math.log(1000 / 18));
+  }
+
   function getQuery() {
     const params = new URLSearchParams();
     params.set('limit', '20');
     const ageMin = document.getElementById('ageMin')?.value;
-    const ageMax = document.getElementById('ageMax')?.value;
+    const ageMaxEl = document.getElementById('ageMax');
+    const ageMax = ageMaxEl ? ageMaxSliderToAge(parseInt(ageMaxEl.value, 10) || 0) : null;
     if (ageMin) params.set('age_min', ageMin);
-    if (ageMax) params.set('age_max', ageMax);
-    const gender = document.getElementById('filterGender')?.value;
+    if (ageMax != null) params.set('age_max', ageMax);
+    const gender = getFilterGender();
     if (gender) params.set('gender', gender);
     const interests = document.getElementById('filterInterests')?.value?.trim();
     if (interests) params.set('interests', interests);
@@ -58,10 +78,11 @@
   function getCountQuery() {
     var p = new URLSearchParams();
     var ageMin = document.getElementById('ageMin')?.value;
-    var ageMax = document.getElementById('ageMax')?.value;
+    var ageMaxEl = document.getElementById('ageMax');
+    var ageMax = ageMaxEl ? ageMaxSliderToAge(parseInt(ageMaxEl.value, 10) || 0) : null;
     if (ageMin) p.set('age_min', ageMin);
-    if (ageMax) p.set('age_max', ageMax);
-    var gender = document.getElementById('filterGender')?.value;
+    if (ageMax != null) p.set('age_max', ageMax);
+    var gender = getFilterGender();
     if (gender) p.set('gender', gender);
     var interests = document.getElementById('filterInterests')?.value?.trim();
     if (interests) p.set('interests', interests);
@@ -258,28 +279,38 @@
     var ageMaxEl = document.getElementById('ageMax');
     var ageMinVal = document.getElementById('ageMinValue');
     var ageMaxVal = document.getElementById('ageMaxValue');
-    function updateAgeLabels() {
-      if (ageMinVal) ageMinVal.textContent = ageMinEl.value;
-      if (ageMaxVal) ageMaxVal.textContent = ageMaxEl.value;
+    function getAgeMaxReal() {
+      return ageMaxSliderToAge(parseInt(ageMaxEl.value, 10) || 0);
     }
     function onAgeMinInput() {
       var min = parseInt(ageMinEl.value, 10);
-      var max = parseInt(ageMaxEl.value, 10);
-      if (min > max) { ageMaxEl.value = min; ageMaxVal.textContent = min; }
-      ageMinVal.textContent = ageMinEl.value;
+      var maxReal = getAgeMaxReal();
+      if (min > maxReal) {
+        ageMaxEl.value = String(ageMaxAgeToSlider(min));
+        if (ageMaxVal) ageMaxVal.textContent = min;
+      }
+      if (ageMinVal) ageMinVal.textContent = ageMinEl.value;
     }
     function onAgeMaxInput() {
       var min = parseInt(ageMinEl.value, 10);
-      var max = parseInt(ageMaxEl.value, 10);
-      if (max < min) { ageMinEl.value = max; ageMinVal.textContent = max; }
-      ageMaxVal.textContent = ageMaxEl.value;
+      var maxReal = getAgeMaxReal();
+      if (maxReal < min) {
+        ageMinEl.value = String(maxReal);
+        if (ageMinVal) ageMinVal.textContent = maxReal;
+      }
+      if (ageMaxVal) ageMaxVal.textContent = maxReal;
     }
     if (ageMinEl) { ageMinEl.addEventListener('input', onAgeMinInput); ageMinVal.textContent = ageMinEl.value; }
-    if (ageMaxEl) { ageMaxEl.addEventListener('input', onAgeMaxInput); ageMaxVal.textContent = ageMaxEl.value; }
+    if (ageMaxEl) {
+      ageMaxEl.addEventListener('input', onAgeMaxInput);
+      if (ageMaxVal) ageMaxVal.textContent = getAgeMaxReal();
+    }
   })();
 
-  var filterGender = document.getElementById('filterGender');
-  if (filterGender) filterGender.addEventListener('change', updateMapCount);
+  ['filterGenderMale', 'filterGenderFemale', 'filterGenderOther'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('change', updateMapCount);
+  });
 
   var btnSearchMain = document.getElementById('btnSearchMain');
   if (btnSearchMain) {
@@ -315,18 +346,37 @@
   var feedMapEl = document.getElementById('feedMap');
   if (feedMapEl && typeof L !== 'undefined') {
     L.Icon.Default.imagePath = 'https://unpkg.com/leaflet@1.9.4/dist/images/';
-    var feedMap = L.map('feedMap', { attributionControl: false }).setView([55.75, 37.62], 4);
-    feedMap.addControl(L.control.attribution({ prefix: '' }).addAttribution('&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'));
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(feedMap);
-    function refreshMapSize() { feedMap.invalidateSize(); }
-    setTimeout(refreshMapSize, 0);
-    setTimeout(refreshMapSize, 300);
-    window.addEventListener('resize', refreshMapSize);
-    if (typeof ResizeObserver !== 'undefined') {
-      var ro = new ResizeObserver(refreshMapSize);
-      ro.observe(feedMapEl);
-    }
-    var feedMapCircle = null;
+
+    function initFeedMap() {
+      if (window._feedMapAlreadyInited) return;
+      window._feedMapAlreadyInited = true;
+      window._feedMapInitCount = (window._feedMapInitCount || 0) + 1;
+      if (feedMapEl._leaflet_id != null) {
+        feedMapEl.innerHTML = '';
+        delete feedMapEl._leaflet_id;
+      }
+      var feedMap = L.map('feedMap', { attributionControl: false }).setView([55.75, 37.62], 4);
+      feedMap.addControl(L.control.attribution({ prefix: '' }).addAttribution('&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'));
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(feedMap);
+      var center = feedMap.getCenter();
+      var rect = feedMapEl.getBoundingClientRect();
+      var mapSize = feedMap.getSize();
+      console.log('[feed map] init #' + window._feedMapInitCount + ' at ' + new Date().toISOString() + ' center=' + center.lat + ',' + center.lng + ' zoom=' + feedMap.getZoom() + ' container=' + feedMapEl.offsetWidth + 'x' + feedMapEl.offsetHeight + ' mapSize=' + (mapSize ? mapSize.x + 'x' + mapSize.y : '—') + ' rect=' + Math.round(rect.width) + 'x' + Math.round(rect.height));
+      setTimeout(function () {
+        feedMap.invalidateSize();
+        feedMap.setView(feedMap.getCenter(), feedMap.getZoom());
+        var size2 = feedMap.getSize();
+        console.log('[feed map] after invalidateSize mapSize=' + (size2 ? size2.x + 'x' + size2.y : '—'));
+      }, 100);
+      setTimeout(function () {
+        feedMap.invalidateSize();
+        feedMap.setView(feedMap.getCenter(), feedMap.getZoom());
+      }, 350);
+      window.addEventListener('resize', function () {
+        feedMap.invalidateSize();
+        feedMap.setView(feedMap.getCenter(), feedMap.getZoom());
+      });
+      var feedMapCircle = null;
     var feedMapMarker = null;
     var feedMapRadiusHandle = null;
     var profileMarkersLayer = L.layerGroup().addTo(feedMap);
@@ -340,9 +390,11 @@
         var lon = p.lon != null ? parseFloat(p.lon) : null;
         if (lat == null || lon == null) return;
         var isMale = p.gender === 'male';
-        var symbol = isMale ? '\u2642' : '\u2640';
+        var isOther = p.gender === 'other';
+        var symbol = isMale ? '\u2642' : (isOther ? '\u26A2' : '\u2640');
+        var iconClass = isMale ? 'map-profile-male' : (isOther ? 'map-profile-other' : 'map-profile-female');
         var icon = L.divIcon({
-          className: 'map-profile-icon ' + (isMale ? 'map-profile-male' : 'map-profile-female'),
+          className: 'map-profile-icon ' + iconClass,
           html: '<span>' + symbol + '</span>',
           iconSize: [28, 28],
           iconAnchor: [14, 14]
@@ -377,7 +429,7 @@
     function setRadiusKm(km) {
       var sel = document.getElementById('mapRadius');
       document.getElementById('mapRadiusKm').value = km;
-      var opts = [25, 50, 100, 200, 500];
+      var opts = [25, 50, 100, 200, 500, 2000];
       var best = opts[0];
       opts.forEach(function (o) { if (Math.abs(o - km) < Math.abs(best - km)) best = o; });
       if (sel) sel.value = String(best);
@@ -417,8 +469,8 @@
           var center = L.latLng(centerLat, centerLon);
           var distM = center.distanceTo(handlePos);
           var newKm = Math.round(distM / 1000);
-          newKm = Math.max(5, Math.min(600, newKm));
-          var presets = [25, 50, 100, 200, 500];
+          newKm = Math.max(5, Math.min(2000, newKm));
+          var presets = [25, 50, 100, 200, 500, 2000];
           newKm = presets.reduce(function (best, o) { return Math.abs(o - newKm) < Math.abs(best - newKm) ? o : best; });
           setRadiusKm(newKm);
           updateMapCount();
@@ -432,18 +484,6 @@
       setMapCenter(e.latlng.lat, e.latlng.lng);
       load();
     });
-
-    var btnResetMap = document.getElementById('btnResetMap');
-    if (btnResetMap) {
-      btnResetMap.addEventListener('click', function () {
-        feedMap.invalidateSize();
-        setTimeout(function () {
-          var c = feedMap.getCenter();
-          var z = feedMap.getZoom();
-          feedMap.setView([c.lat, c.lng], z);
-        }, 100);
-      });
-    }
 
     document.getElementById('btnMyLocation').addEventListener('click', function () {
       var btn = this;
@@ -491,6 +531,28 @@
         load();
       })
       .catch(function () { load(); });
+    }
+
+    var feedMapInited = false;
+    var feedMapTimeoutId = null;
+    function waitForSize() {
+      if (feedMapInited) return;
+      if (feedMapEl.offsetWidth > 0 && feedMapEl.offsetHeight > 0) {
+        feedMapInited = true;
+        if (feedMapTimeoutId != null) clearTimeout(feedMapTimeoutId);
+        initFeedMap();
+        return;
+      }
+      requestAnimationFrame(waitForSize);
+    }
+    requestAnimationFrame(waitForSize);
+    feedMapTimeoutId = setTimeout(function () {
+      feedMapTimeoutId = null;
+      if (!feedMapInited) {
+        feedMapInited = true;
+        initFeedMap();
+      }
+    }, 2000);
   } else {
     load();
   }

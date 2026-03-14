@@ -47,6 +47,8 @@ def create_app(config_name: str | None = None) -> Flask:
     config[config_name].init_app(app)
 
     get_db(app.config)
+    app.config["APP_START_TIME"] = datetime.utcnow()
+    app.config["REQUEST_COUNT"] = [0]
     csrf.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"
@@ -79,12 +81,19 @@ def create_app(config_name: str | None = None) -> Flask:
     @app.context_processor
     def inject_version_and_stats():
         from flask_login import current_user
-        version_file = os.path.join(os.path.dirname(app.root_path), "VERSION")
+        root = os.path.dirname(app.root_path)
+        version_file = os.path.join(root, "VERSION")
+        release_file = os.path.join(root, "RELEASE")
         try:
             with open(version_file, encoding="utf-8") as f:
                 version = f.read().strip() or "0.0.0"
         except OSError:
             version = "0.0.0"
+        try:
+            with open(release_file, encoding="utf-8") as f:
+                release_time = f.read().strip() or ""
+        except OSError:
+            release_time = ""
         stats_total = 0
         stats_real = 0
         stats_online = 0
@@ -108,6 +117,7 @@ def create_app(config_name: str | None = None) -> Flask:
             pass
         header_user_name = None
         header_user_balance = None
+        header_matches_count = None
         header_last_match_id = None
         header_last_match_label = None
         if current_user.is_authenticated:
@@ -119,6 +129,9 @@ def create_app(config_name: str | None = None) -> Flask:
                 my_oid = oid(current_user.id)
                 user_doc = db.users.find_one({"_id": my_oid}, {"balance": 1})
                 header_user_balance = user_doc.get("balance", 100) if user_doc else 100
+                header_matches_count = db.matches.count_documents(
+                    {"$or": [{"user1_id": my_oid}, {"user2_id": my_oid}]}
+                )
                 match = db.matches.find_one(
                     {"$or": [{"user1_id": my_oid}, {"user2_id": my_oid}]},
                     sort=[("created_at", -1)],
@@ -141,9 +154,18 @@ def create_app(config_name: str | None = None) -> Flask:
             "stats_online": stats_online,
             "header_user_name": header_user_name,
             "header_user_balance": header_user_balance,
+            "header_matches_count": header_matches_count,
             "header_last_match_id": header_last_match_id,
             "header_last_match_label": header_last_match_label,
         }
+
+    @app.after_request
+    def count_request(response):
+        try:
+            app.config["REQUEST_COUNT"][0] += 1
+        except (KeyError, TypeError):
+            pass
+        return response
 
     @app.after_request
     def update_last_seen(response):

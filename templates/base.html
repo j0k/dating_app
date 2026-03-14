@@ -18,13 +18,19 @@
         <span class="logo-icon">🍌</span>
         <span class="logo-text">Dating App</span>
       </a>
-      {% if current_user.is_authenticated and (header_user_name or header_last_match_id or header_user_balance is not none) %}
+      {% if current_user.is_authenticated and (header_user_name or header_last_match_id or header_user_balance is not none or header_matches_count is not none) %}
       <div class="header-user-line">
         {% if header_user_name %}<span class="header-user-name">{{ header_user_name }}</span>{% endif %}
         {% if header_last_match_id %}
         <a href="{{ url_for('main.chat', match_id=header_last_match_id) }}" class="header-user-chat">Чат с {{ header_last_match_label }}</a>
         {% endif %}
-        {% if header_user_balance is not none %}<span class="header-user-balance">Баланс: {{ header_user_balance }}</span>{% endif %}
+        {% if header_user_balance is not none or header_matches_count is not none %}
+        <span class="header-user-balance">
+          {% if header_user_balance is not none %}🔥 {{ header_user_balance }}{% endif %}
+          {% if header_user_balance is not none and header_matches_count is not none %} · {% endif %}
+          {% if header_matches_count is not none %}💕 {{ header_matches_count }}{% endif %}
+        </span>
+        {% endif %}
       </div>
       {% endif %}
     </div>

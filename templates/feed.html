@@ -1,15 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Лента{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+{% endblock %}
 {% block content %}
 <div class="feed-container">
   <div class="feed-flow">
     <p class="feed-flow-step">1. Кого ищете?</p>
-    <div class="feed-flow-row">
-      <select id="filterGender">
-        <option value="">Все</option>
-        <option value="male">Мужчин</option>
-        <option value="female">Женщин</option>
-      </select>
+    <div class="feed-flow-row feed-gender-checkboxes">
+      <label class="filter-checkbox"><input type="checkbox" id="filterGenderMale" name="gender" value="male" checked> Мужчины</label>
+      <label class="filter-checkbox"><input type="checkbox" id="filterGenderFemale" name="gender" value="female" checked> Женщины</label>
+      <label class="filter-checkbox"><input type="checkbox" id="filterGenderOther" name="gender" value="other"> Небинарные</label>
     </div>
     <div class="feed-flow-row feed-interests-row">
       <label for="filterInterests" class="feed-interests-label">Интересы (ключевые слова):</label>
@@ -18,7 +19,7 @@
     <p class="feed-flow-step">2. Где вы? Кликните на карте — появится метка «вы». Или нажмите «Я здесь».</p>
     <input type="hidden" id="feedMapCenterLat" value="">
     <input type="hidden" id="feedMapCenterLon" value="">
-    <div id="feedMap" class="feed-map feed-map-big"></div>
+    <div id="feedMap" class="feed-map-container"></div>
     <p class="feed-map-count" id="feedMapCountWrap">В этом районе: <strong id="feedMapCount">—</strong> человек</p>
     <div class="feed-map-actions">
       <button type="button" class="btn btn-ghost btn-sm" id="btnMyLocation">Я здесь</button>
@@ -30,6 +31,7 @@
         <option value="100">100 км</option>
         <option value="200">200 км</option>
         <option value="500">500 км</option>
+        <option value="2000">2000 км</option>
       </select>
       <input type="hidden" id="mapRadiusKm" value="50">
       <button type="button" class="btn btn-primary btn-search-main" id="btnSearchMain">Искать</button>
@@ -48,7 +50,7 @@
         </span>
         <span class="filter-age-row">
           <span class="filter-age-label">до</span>
-          <input type="range" id="ageMax" min="18" max="100" value="100" class="filter-age-slider">
+          <input type="range" id="ageMax" min="0" max="100" value="42" class="filter-age-slider" title="Логарифмическая шкала до 1000">
           <span id="ageMaxValue" class="filter-age-value">100</span>
         </span>
       </div>

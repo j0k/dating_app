@@ -15,6 +15,12 @@
   </div>
 </section>
 
+<section class="map-section">
+  <h2>На карте</h2>
+  <p class="map-description">Пользователи, которые указали своё местоположение. Настроить можно в <a href="{{ url_for('main.cabinet') }}">личном кабинете</a>.</p>
+  <div id="map"></div>
+</section>
+
 <section class="bulletin-section">
   <h2>Доска объявлений</h2>
   {% if current_user.is_authenticated %}
@@ -33,12 +39,6 @@
   </div>
   {% endif %}
   <div class="bulletin-list" id="bulletinList"></div>
-</section>
-
-<section class="map-section">
-  <h2>На карте</h2>
-  <p class="map-description">Пользователи, которые указали своё местоположение. Настроить можно в <a href="{{ url_for('main.cabinet') }}">личном кабинете</a>.</p>
-  <div id="map"></div>
 </section>
 
 <section class="hero features" style="margin-top: 2rem;">

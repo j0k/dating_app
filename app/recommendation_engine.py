@@ -60,7 +60,7 @@ def get_recommendations(
             match["user_id"]["$nin"] = list(viewed | set(test_ids))
 
     if age_min is not None or age_max is not None:
-        if (age_min is not None and age_max is not None) and (age_min <= 18 and age_max >= 99):
+        if (age_min is not None and age_max is not None) and (age_min <= 18 and age_max >= 999):
             pass
         else:
             today = date.today()
