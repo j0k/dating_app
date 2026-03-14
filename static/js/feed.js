@@ -3,12 +3,33 @@
   const emptyFeed = document.getElementById('emptyFeed');
   const btnSkip = document.getElementById('btnSkip');
   const btnLike = document.getElementById('btnLike');
+  const btnSuperLike = document.getElementById('btnSuperLike');
   const btnApplyFilters = document.getElementById('btnApplyFilters');
   const btnReload = document.getElementById('btnReload');
+  const feedBalanceValue = document.getElementById('feedBalanceValue');
 
   let profiles = [];
   let currentIndex = 0;
   let startX = 0;
+  let balance = 100;
+
+  function updateBalanceDisplay() {
+    if (feedBalanceValue) feedBalanceValue.textContent = balance;
+    if (btnSuperLike) {
+      btnSuperLike.disabled = balance < 3;
+      btnSuperLike.title = balance < 3 ? 'Недостаточно баланса (нужно 3)' : 'Суперлайк (3 с баланса)';
+    }
+  }
+
+  function fetchBalance() {
+    fetch('/api/me', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        balance = data.balance != null ? data.balance : 100;
+        updateBalanceDisplay();
+      })
+      .catch(function () { updateBalanceDisplay(); });
+  }
 
   function getQuery() {
     const params = new URLSearchParams();
@@ -19,6 +40,8 @@
     if (ageMax) params.set('age_max', ageMax);
     const gender = document.getElementById('filterGender')?.value;
     if (gender) params.set('gender', gender);
+    const interests = document.getElementById('filterInterests')?.value?.trim();
+    if (interests) params.set('interests', interests);
     if (document.getElementById('onlyReal')?.checked) params.set('only_real', '1');
     const mapLat = document.getElementById('feedMapCenterLat')?.value;
     const mapLon = document.getElementById('feedMapCenterLon')?.value;
@@ -40,6 +63,8 @@
     if (ageMax) p.set('age_max', ageMax);
     var gender = document.getElementById('filterGender')?.value;
     if (gender) p.set('gender', gender);
+    var interests = document.getElementById('filterInterests')?.value?.trim();
+    if (interests) p.set('interests', interests);
     if (document.getElementById('onlyReal')?.checked) p.set('only_real', '1');
     var mapLat = document.getElementById('feedMapCenterLat')?.value;
     var mapLon = document.getElementById('feedMapCenterLon')?.value;
@@ -83,6 +108,11 @@
   var goalLabels = { serious: 'Серьёзные', dating: 'Знакомства', friendship: 'Дружба', open: 'Открытые', unsure: 'Пока не знаю' };
   var typeLabels = { monogamous: 'Моногамия', polyamorous: 'Полиамория', any: 'Любые' };
 
+  function defaultAvatarUrl(gender) {
+    var g = (gender === 'male' || gender === 'female') ? gender : 'other';
+    return '/static/images/avatar-default-' + g + '.svg';
+  }
+
   function renderCard(profile, index) {
     const card = document.createElement('div');
     card.className = 'profile-card';
@@ -92,7 +122,7 @@
     const meta = [age, profile.city].filter(Boolean).join(' · ');
     const photo = profile.avatar_url
       ? '<img src="' + escapeHtml(profile.avatar_url) + '" alt="">'
-      : '<span>👤</span>';
+      : '<img src="' + escapeHtml(defaultAvatarUrl(profile.gender)) + '" alt="" class="default-avatar">';
     const tags = (profile.interests || []).slice(0, 5).map(i => '<span class="tag">' + escapeHtml(i) + '</span>').join('');
     var goalType = [];
     if (profile.relationship_goal && goalLabels[profile.relationship_goal]) goalType.push(goalLabels[profile.relationship_goal]);
@@ -134,21 +164,22 @@
     }
   }
 
-  function sendReaction(isLike) {
+  function sendReaction(isLike, isSuper) {
     const profile = profiles[currentIndex];
     if (!profile) return Promise.resolve();
     return fetch('/api/like', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
       credentials: 'same-origin',
-      body: JSON.stringify({ to_user_id: profile.user_id, is_like: isLike })
-    }).then(r => r.json()).then(data => {
-      if (data.new_match && data.match_id) {
-        if (confirm('Это матч! Перейти в чат?')) {
-          window.location.href = '/chat/' + data.match_id;
-        }
-      }
-      return data;
+      body: JSON.stringify({ to_user_id: profile.user_id, is_like: isLike, is_super: !!isSuper })
+    }).then(function (r) {
+      return r.json().then(function (data) {
+        if (!r.ok) return Promise.reject(data);
+        if (data.balance != null) balance = data.balance;
+        updateBalanceDisplay();
+        if (data.new_match && data.match_id) showMatchOverlay(data.match_id);
+        return data;
+      });
     });
   }
 
@@ -157,15 +188,40 @@
     return meta ? meta.getAttribute('content') : '';
   }
 
+  function showMatchOverlay(matchId) {
+    const overlay = document.getElementById('matchOverlay');
+    if (!overlay) return;
+    overlay.dataset.matchId = matchId;
+    overlay.classList.add('is-visible');
+    overlay.setAttribute('aria-hidden', 'false');
+  }
+
+  function hideMatchOverlay() {
+    const overlay = document.getElementById('matchOverlay');
+    if (!overlay) return;
+    overlay.classList.remove('is-visible');
+    overlay.setAttribute('aria-hidden', 'true');
+    delete overlay.dataset.matchId;
+  }
+
+  document.getElementById('matchGoToChat')?.addEventListener('click', function () {
+    const matchId = document.getElementById('matchOverlay')?.dataset?.matchId;
+    if (matchId) window.location.href = '/chat/' + matchId;
+  });
+  document.getElementById('matchLater')?.addEventListener('click', hideMatchOverlay);
+  document.querySelector('.match-overlay-backdrop')?.addEventListener('click', hideMatchOverlay);
+
   function swipeCard(direction) {
     const cards = cardStack.querySelectorAll('.profile-card');
     const topCard = cards[0];
     if (!topCard || !profiles[currentIndex]) return;
     const profile = profiles[currentIndex];
+    const isLike = direction === 'right' || direction === 'super';
+    const isSuper = direction === 'super';
     topCard.classList.add(direction === 'left' ? 'swipe-left' : 'swipe-right');
-    sendReaction(direction === 'right').then(() => {
+    sendReaction(isLike, isSuper).then(function () {
       currentIndex++;
-      setTimeout(() => {
+      setTimeout(function () {
         topCard.remove();
         if (currentIndex < profiles.length) {
           const next = profiles[currentIndex];
@@ -176,8 +232,9 @@
           showCards();
         }
       }, 300);
-    }).catch(() => {
+    }).catch(function (err) {
       topCard.classList.remove('swipe-left', 'swipe-right');
+      if (err && err.error) alert(err.error);
     });
   }
 
@@ -237,10 +294,12 @@
     });
   }
 
-  btnSkip.addEventListener('click', () => swipeCard('left'));
-  btnLike.addEventListener('click', () => swipeCard('right'));
+  btnSkip.addEventListener('click', function () { swipeCard('left'); });
+  btnLike.addEventListener('click', function () { swipeCard('right'); });
+  if (btnSuperLike) btnSuperLike.addEventListener('click', function () { swipeCard('super'); });
   btnApplyFilters.addEventListener('click', load);
   btnReload.addEventListener('click', load);
+  fetchBalance();
 
   cardStack.addEventListener('mousedown', e => { startX = e.clientX; });
   cardStack.addEventListener('mouseup', e => {
@@ -255,12 +314,23 @@
 
   var feedMapEl = document.getElementById('feedMap');
   if (feedMapEl && typeof L !== 'undefined') {
+    L.Icon.Default.imagePath = 'https://unpkg.com/leaflet@1.9.4/dist/images/';
     var feedMap = L.map('feedMap', { attributionControl: false }).setView([55.75, 37.62], 4);
     feedMap.addControl(L.control.attribution({ prefix: '' }).addAttribution('&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'));
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(feedMap);
+    function refreshMapSize() { feedMap.invalidateSize(); }
+    setTimeout(refreshMapSize, 0);
+    setTimeout(refreshMapSize, 300);
+    window.addEventListener('resize', refreshMapSize);
+    if (typeof ResizeObserver !== 'undefined') {
+      var ro = new ResizeObserver(refreshMapSize);
+      ro.observe(feedMapEl);
+    }
     var feedMapCircle = null;
     var feedMapMarker = null;
+    var feedMapRadiusHandle = null;
     var profileMarkersLayer = L.layerGroup().addTo(feedMap);
+    var KM_PER_DEG_LAT = 111.32;
 
     window.updateFeedMapProfiles = function (profilesList) {
       profileMarkersLayer.clearLayers();
@@ -305,8 +375,12 @@
       updateFeedMapCircle();
     }
     function setRadiusKm(km) {
+      var sel = document.getElementById('mapRadius');
       document.getElementById('mapRadiusKm').value = km;
-      document.getElementById('mapRadius').value = km;
+      var opts = [25, 50, 100, 200, 500];
+      var best = opts[0];
+      opts.forEach(function (o) { if (Math.abs(o - km) < Math.abs(best - km)) best = o; });
+      if (sel) sel.value = String(best);
       updateFeedMapCircle();
     }
     window._feedMapSetCenter = setMapCenter;
@@ -318,6 +392,8 @@
       var lon = document.getElementById('feedMapCenterLon').value;
       var radiusKm = getRadiusKm();
       if (feedMapCircle) feedMap.removeLayer(feedMapCircle);
+      if (feedMapRadiusHandle) feedMap.removeLayer(feedMapRadiusHandle);
+      feedMapRadiusHandle = null;
       if (lat && lon && radiusKm > 0) {
         var centerLat = parseFloat(lat);
         var centerLon = parseFloat(lon);
@@ -328,6 +404,26 @@
           weight: 2,
           fillOpacity: 0.15
         }).addTo(feedMap);
+        var handleLat = centerLat + (radiusKm / KM_PER_DEG_LAT);
+        var radiusHandleIcon = L.divIcon({
+          className: 'feed-map-radius-handle',
+          html: '<span></span>',
+          iconSize: [14, 14],
+          iconAnchor: [7, 7]
+        });
+        feedMapRadiusHandle = L.marker([handleLat, centerLon], { draggable: true, icon: radiusHandleIcon }).addTo(feedMap);
+        feedMapRadiusHandle.on('dragend', function () {
+          var handlePos = feedMapRadiusHandle.getLatLng();
+          var center = L.latLng(centerLat, centerLon);
+          var distM = center.distanceTo(handlePos);
+          var newKm = Math.round(distM / 1000);
+          newKm = Math.max(5, Math.min(600, newKm));
+          var presets = [25, 50, 100, 200, 500];
+          newKm = presets.reduce(function (best, o) { return Math.abs(o - newKm) < Math.abs(best - newKm) ? o : best; });
+          setRadiusKm(newKm);
+          updateMapCount();
+          if (document.getElementById('feedMapCenterLat').value && document.getElementById('feedMapCenterLon').value) load();
+        });
       }
       updateMapCount();
     }
@@ -336,6 +432,18 @@
       setMapCenter(e.latlng.lat, e.latlng.lng);
       load();
     });
+
+    var btnResetMap = document.getElementById('btnResetMap');
+    if (btnResetMap) {
+      btnResetMap.addEventListener('click', function () {
+        feedMap.invalidateSize();
+        setTimeout(function () {
+          var c = feedMap.getCenter();
+          var z = feedMap.getZoom();
+          feedMap.setView([c.lat, c.lng], z);
+        }, 100);
+      });
+    }
 
     document.getElementById('btnMyLocation').addEventListener('click', function () {
       var btn = this;

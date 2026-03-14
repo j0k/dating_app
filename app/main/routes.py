@@ -1,4 +1,4 @@
-from flask import render_template
+from flask import redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app.main import main_bp
@@ -9,6 +9,18 @@ from app.models.profile import get_profile_by_user_id, profile_to_dict
 @main_bp.route("/")
 def index():
     return render_template("index.html")
+
+
+@main_bp.route("/stats")
+def stats_redirect():
+    """Редирект на /api/stats для удобства."""
+    return redirect(url_for("api.stats"), code=302)
+
+
+@main_bp.route("/register")
+def register_redirect():
+    """Редирект на /auth/register (сохраняем ref из ссылки-приглашения)."""
+    return redirect(url_for("auth.register", **request.args), code=302)
 
 
 @main_bp.route("/share/<user_id>")

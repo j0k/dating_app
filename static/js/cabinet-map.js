@@ -4,6 +4,7 @@
   const lonInput = document.getElementById('lon');
   const btnClear = document.getElementById('btnClearMap');
   if (!mapEl || !latInput || !lonInput) return;
+  if (typeof L !== 'undefined') L.Icon.Default.imagePath = 'https://unpkg.com/leaflet@1.9.4/dist/images/';
 
   var map = L.map('mapPicker', { attributionControl: false }).setView([55.75, 37.62], 4);
   map.addControl(L.control.attribution({ prefix: '' }).addAttribution('&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'));

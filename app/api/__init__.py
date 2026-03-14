@@ -10,5 +10,7 @@ from app.api import (  # noqa: E402, F401
     chat,
     announcements,
     map_users,
+    map_chat,
+    stats,
     invite,
 )

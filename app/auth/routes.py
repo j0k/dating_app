@@ -1,11 +1,12 @@
 import logging
-from datetime import datetime
+from datetime import date, datetime
 
 from flask import redirect, render_template, request, url_for
 from flask_login import current_user, login_user, logout_user
 from flask_wtf import FlaskForm
-from wtforms import PasswordField, StringField
-from wtforms.validators import DataRequired, Email, EqualTo, Length
+from wtforms import PasswordField, SelectField, StringField
+from wtforms.fields import DateField
+from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional
 
 from app.auth import auth_bp
 from app.db import get_db, oid
@@ -33,6 +34,12 @@ class RegisterForm(FlaskForm):
     )
     password_confirm = PasswordField("Повторите пароль", validators=[DataRequired()])
     name = StringField("Имя", validators=[DataRequired(), Length(max=100)])
+    birth_date = DateField("Дата рождения", validators=[Optional()], format="%Y-%m-%d")
+    gender = SelectField(
+        "Пол",
+        choices=[("", "—"), ("male", "Мужской"), ("female", "Женский"), ("other", "Другое")],
+        validators=[Optional()],
+    )
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
@@ -83,11 +90,18 @@ def register():
                 referred_by = referrer["_id"]
         password_hash = __import__("werkzeug.security", fromlist=["generate_password_hash"]).generate_password_hash(form.password.data)
         user_id = create_user(db, form.email.data, password_hash, referred_by=referred_by)
-        db.profiles.insert_one({
+        profile_doc = {
             "user_id": user_id,
             "name": form.name.data[:100],
             "updated_at": datetime.utcnow(),
-        })
+        }
+        if form.birth_date.data:
+            # BSON требует datetime, не date
+            bd = form.birth_date.data
+            profile_doc["birth_date"] = datetime(bd.year, bd.month, bd.day)
+        if form.gender.data in ("male", "female", "other"):
+            profile_doc["gender"] = form.gender.data
+        db.profiles.insert_one(profile_doc)
         user_doc = db.users.find_one({"_id": user_id})
         profile_doc = get_profile_by_user_id(db, user_id)
         user = User(user_doc, profile_doc)

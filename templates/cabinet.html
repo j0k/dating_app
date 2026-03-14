@@ -51,7 +51,7 @@
       </div>
       <div class="form-group">
         <label for="interests">Интересы (через запятую)</label>
-        <input id="interests" name="interests" type="text" maxlength="500" placeholder="музыка, путешествия, кофе">
+        <input id="interests" name="interests" type="text" maxlength="500" placeholder="музыка, путешествия, кофе, деньги">
       </div>
       <div class="form-group">
         <label for="relationship_goal">Цель отношений</label>
@@ -112,8 +112,11 @@
     </div>
   </div>
 </div>
+{% endblock %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/header-stats.js') }}"></script>
 <script src="{{ url_for('static', filename='js/cabinet.js') }}"></script>
 <script src="{{ url_for('static', filename='js/cabinet-map.js') }}"></script>
 {% endblock %}

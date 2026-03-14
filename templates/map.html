@@ -1,13 +1,28 @@
 {% extends "base.html" %}
 {% block title %}Карта{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin="">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin="">
+{% endblock %}
 {% block content %}
 <h1 class="page-title">Карта</h1>
 <p class="map-description">Пользователи, которые указали своё местоположение. Указать себя можно в <a href="{{ url_for('main.cabinet') }}">личном кабинете</a>.</p>
 <div id="map" class="map-full"></div>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin="">
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin="">
+<section class="map-chat-section">
+  <h2 class="map-chat-title">Чат под картой</h2>
+  <p class="map-chat-hint">Любой может оставить сообщение. Для гостей отображается IP, для залогиненных — имя и пол.</p>
+  <div class="map-chat-messages" id="mapChatMessages"></div>
+  <form class="map-chat-form" id="mapChatForm">
+    <textarea id="mapChatText" placeholder="Ваше сообщение..." rows="2" maxlength="2000"></textarea>
+    <button type="submit" class="btn btn-primary" id="mapChatSubmit">Отправить</button>
+  </form>
+</section>
+{% endblock %}
+{% block scripts %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
+<script src="{{ url_for('static', filename='js/header-stats.js') }}"></script>
 <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+<script src="{{ url_for('static', filename='js/map-chat.js') }}"></script>
 {% endblock %}

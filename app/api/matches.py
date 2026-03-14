@@ -24,11 +24,25 @@ def matches():
     for m in cursor:
         other_id = m["user2_id"] if m["user1_id"] == my_oid else m["user1_id"]
         profile_doc = get_profile_by_user_id(db, other_id)
+        super_by_me = db.likes.find_one({
+            "from_user_id": my_oid,
+            "to_user_id": other_id,
+            "is_like": True,
+            "is_super": True,
+        })
+        super_by_them = db.likes.find_one({
+            "from_user_id": other_id,
+            "to_user_id": my_oid,
+            "is_like": True,
+            "is_super": True,
+        })
         result.append({
             "match_id": str(m["_id"]),
             "user_id": str(other_id),
             "profile": profile_to_dict(profile_doc) if profile_doc else None,
             "created_at": m["created_at"].isoformat() if m.get("created_at") else None,
+            "super_like_by_me": super_by_me is not None,
+            "super_like_by_them": super_by_them is not None,
         })
     return {"matches": result}
 

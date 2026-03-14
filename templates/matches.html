@@ -1,8 +1,23 @@
 {% extends "base.html" %}
 {% block title %}Матчи{% endblock %}
 {% block content %}
-<h1 class="page-title">Матчи</h1>
-<div class="matches-list" id="matchesList"></div>
-<p class="empty-feed" id="emptyMatches" style="display: none;">Пока нет матчей. Ставьте лайки в ленте — при взаимном лайке здесь появится чат.</p>
+<h1 class="page-title">💕 Матчи <span class="matches-total-count" id="matchesTotalCount"></span></h1>
+<nav class="matches-tabs" role="tablist">
+  <button type="button" class="matches-tab is-active" data-tab="matches" role="tab" aria-selected="true"><span class="tab-emoji">💬</span><span class="tab-label">Матчи</span></button>
+  <button type="button" class="matches-tab" data-tab="liked" role="tab" aria-selected="false"><span class="tab-emoji">♥</span><span class="tab-label">Лайкнул</span></button>
+</nav>
+<div class="matches-panel" id="panelMatches">
+  <p class="matches-hint">💬 Взаимные лайки — здесь чаты. Лайкайте в ленте.</p>
+  <div class="matches-list" id="matchesList"></div>
+  <p class="empty-feed" id="emptyMatches" style="display: none;">Пока нет. Лайкайте в ленте — при взаимности появится чат.</p>
+</div>
+<div class="matches-panel" id="panelLiked" style="display: none;">
+  <p class="matches-hint">♥ Кого вы лайкнули. Есть матч — откроется чат.</p>
+  <div class="matches-list" id="likedList"></div>
+  <p class="empty-feed" id="emptyLiked" style="display: none;">Никого не лайкнули.</p>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/header-stats.js') }}"></script>
 <script src="{{ url_for('static', filename='js/matches.js') }}"></script>
 {% endblock %}

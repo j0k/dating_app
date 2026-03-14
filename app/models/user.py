@@ -111,6 +111,7 @@ def create_user(db, email: str, password_hash: str, referred_by: ObjectId | None
             "password_hash": password_hash,
             "created_at": now,
             "invite_code": invite_code,
+            "balance": 100,
         }
         if referred_by is not None:
             doc["referred_by"] = referred_by
@@ -125,6 +126,7 @@ def create_user(db, email: str, password_hash: str, referred_by: ObjectId | None
         "password_hash": password_hash,
         "created_at": now,
         "invite_code": invite_code,
+        "balance": 100,
     }
     if referred_by is not None:
         doc["referred_by"] = referred_by

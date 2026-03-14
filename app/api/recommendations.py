@@ -60,6 +60,8 @@ def recommendations_count():
     age_max = request.args.get("age_max", type=int)
     gender = request.args.get("gender") or None
     city = request.args.get("city") or None
+    interests_str = request.args.get("interests")
+    interests = [s.strip() for s in interests_str.split(",")] if interests_str else None
     only_real = request.args.get("only_real", "").lower() in ("1", "true", "yes")
     map_lat = request.args.get("map_lat", type=float)
     map_lon = request.args.get("map_lon", type=float)
@@ -72,6 +74,7 @@ def recommendations_count():
         age_max=age_max,
         gender=gender,
         city=city,
+        interests=interests,
         only_real=only_real,
         map_lat=map_lat,
         map_lon=map_lon,

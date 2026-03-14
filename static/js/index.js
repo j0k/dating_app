@@ -64,6 +64,7 @@
   loadAnnouncements();
 
   if (mapEl) {
+    if (typeof L !== 'undefined') L.Icon.Default.imagePath = 'https://unpkg.com/leaflet@1.9.4/dist/images/';
     var map = L.map('map', { attributionControl: false }).setView([55.75, 37.62], 3);
     map.addControl(L.control.attribution({ prefix: '' }).addAttribution('&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'));
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);

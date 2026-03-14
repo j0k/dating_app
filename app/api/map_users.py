@@ -3,7 +3,7 @@
 """
 from app.api import api_bp
 from app.db import get_db
-from app.models.profile import profile_age
+from app.models.profile import profile_age, profile_interests_list
 
 
 def _gender_display(gender):
@@ -23,7 +23,7 @@ def map_users():
     db = get_db(current_app.config)
     cursor = db.profiles.find(
         {"lat": {"$exists": True, "$ne": None}, "lon": {"$exists": True, "$ne": None}},
-        {"user_id": 1, "name": 1, "city": 1, "lat": 1, "lon": 1, "birth_date": 1, "gender": 1}
+        {"user_id": 1, "name": 1, "city": 1, "lat": 1, "lon": 1, "birth_date": 1, "gender": 1, "interests": 1}
     )
     items = []
     for p in cursor:
@@ -36,5 +36,6 @@ def map_users():
             "lon": p["lon"],
             "age": age,
             "gender_display": _gender_display(p.get("gender")),
+            "interests": profile_interests_list(p),
         })
     return {"users": items}

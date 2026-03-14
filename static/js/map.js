@@ -1,6 +1,7 @@
 (function () {
   const mapEl = document.getElementById('map');
   if (!mapEl) return;
+  if (typeof L !== 'undefined') L.Icon.Default.imagePath = 'https://unpkg.com/leaflet@1.9.4/dist/images/';
 
   function escapeHtml(s) {
     if (s == null) return '';
@@ -30,6 +31,7 @@
         if (u.gender_display) parts.push(escapeHtml(u.gender_display));
         if (parts.length) popup += '<br>' + parts.join(' · ');
         if (u.city) popup += '<br>' + escapeHtml(u.city);
+        if (u.interests && u.interests.length) popup += '<br><span class="map-popup-interests">' + escapeHtml(u.interests.join(', ')) + '</span>';
         m.bindPopup(popup);
         markers.addLayer(m);
         bounds.push([u.lat, u.lon]);

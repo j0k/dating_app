@@ -3,6 +3,7 @@ Dating App MVP — рекомендательный сервис в формат
 """
 import logging
 import os
+from datetime import datetime, timedelta
 from logging.handlers import RotatingFileHandler
 
 from flask import Flask
@@ -71,19 +72,92 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(main_bp)
     app.register_blueprint(api_bp, url_prefix="/api")
 
+    # Публичный чат под картой — без CSRF, чтобы POST с JSON работал стабильно
+    from app.api.map_chat import map_chat_post
+    csrf.exempt(map_chat_post)
+
     @app.context_processor
     def inject_version_and_stats():
+        from flask_login import current_user
         version_file = os.path.join(os.path.dirname(app.root_path), "VERSION")
         try:
             with open(version_file, encoding="utf-8") as f:
                 version = f.read().strip() or "0.0.0"
         except OSError:
             version = "0.0.0"
+        stats_total = 0
+        stats_real = 0
+        stats_online = 0
         try:
-            total_users = get_db(app.config).users.count_documents({})
+            db = get_db(app.config)
+            stats_total = db.users.count_documents({})
         except Exception:
-            total_users = 0
-        return {"app_version": version, "total_users": total_users}
+            pass
+        try:
+            db = get_db(app.config)
+            real_name = "Сальто"
+            n = db.profiles.count_documents({"name": real_name})
+            stats_real = n
+        except Exception:
+            pass
+        try:
+            db = get_db(app.config)
+            since = datetime.utcnow() - timedelta(minutes=15)
+            stats_online = db.users.count_documents({"last_seen": {"$gte": since}})
+        except Exception:
+            pass
+        header_user_name = None
+        header_user_balance = None
+        header_last_match_id = None
+        header_last_match_label = None
+        if current_user.is_authenticated:
+            profile = current_user.profile if hasattr(current_user, "profile") else None
+            header_user_name = (getattr(profile, "name", None) or "").strip() or "Вы"
+            try:
+                from app.db import oid
+                db = get_db(app.config)
+                my_oid = oid(current_user.id)
+                user_doc = db.users.find_one({"_id": my_oid}, {"balance": 1})
+                header_user_balance = user_doc.get("balance", 100) if user_doc else 100
+                match = db.matches.find_one(
+                    {"$or": [{"user1_id": my_oid}, {"user2_id": my_oid}]},
+                    sort=[("created_at", -1)],
+                    projection={"user1_id": 1, "user2_id": 1, "_id": 1},
+                )
+                if match:
+                    header_last_match_id = str(match["_id"])
+                    other_id = match["user2_id"] if match["user1_id"] == my_oid else match["user1_id"]
+                    from app.models.profile import get_profile_by_user_id
+                    other = get_profile_by_user_id(db, other_id)
+                    header_last_match_label = (other or {}).get("name") or "Чат"
+            except Exception:
+                pass
+        return {
+            "app_version": version,
+            "release_time": release_time,
+            "total_users": stats_total,
+            "stats_total": stats_total,
+            "stats_real": stats_real,
+            "stats_online": stats_online,
+            "header_user_name": header_user_name,
+            "header_user_balance": header_user_balance,
+            "header_last_match_id": header_last_match_id,
+            "header_last_match_label": header_last_match_label,
+        }
+
+    @app.after_request
+    def update_last_seen(response):
+        from flask_login import current_user
+        if current_user.is_authenticated:
+            try:
+                from app.db import oid
+                get_db(app.config).users.update_one(
+                    {"_id": oid(current_user.id)},
+                    {"$set": {"last_seen": datetime.utcnow()}},
+                )
+            except Exception:
+                pass
+        return response
 
     app.logger.info("App created: %s", config_name)
     return app

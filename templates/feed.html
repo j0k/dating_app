@@ -11,6 +11,10 @@
         <option value="female">Женщин</option>
       </select>
     </div>
+    <div class="feed-flow-row feed-interests-row">
+      <label for="filterInterests" class="feed-interests-label">Интересы (ключевые слова):</label>
+      <input type="text" id="filterInterests" class="feed-interests-input" placeholder="музыка, путешествия, деньги, кофе" maxlength="200">
+    </div>
     <p class="feed-flow-step">2. Где вы? Кликните на карте — появится метка «вы». Или нажмите «Я здесь».</p>
     <input type="hidden" id="feedMapCenterLat" value="">
     <input type="hidden" id="feedMapCenterLon" value="">
@@ -18,6 +22,7 @@
     <p class="feed-map-count" id="feedMapCountWrap">В этом районе: <strong id="feedMapCount">—</strong> человек</p>
     <div class="feed-map-actions">
       <button type="button" class="btn btn-ghost btn-sm" id="btnMyLocation">Я здесь</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnResetMap" title="Обновить отображение карты (если серый экран)">Сбросить карту</button>
       <span class="feed-flow-step">3. Радиус поиска:</span>
       <select id="mapRadius">
         <option value="25">25 км</option>
@@ -29,7 +34,7 @@
       <input type="hidden" id="mapRadiusKm" value="50">
       <button type="button" class="btn btn-primary btn-search-main" id="btnSearchMain">Искать</button>
     </div>
-    <p class="feed-flow-hint">После «Искать» на карте появятся люди (♂ мужчины, ♀ женщины), ниже — карточки.</p>
+    <p class="feed-flow-hint">Тяните жёлтую точку на границе круга, чтобы изменить радиус. После «Искать» на карте появятся люди (♂ ♀), ниже — карточки.</p>
   </div>
   <details class="feed-filters-details">
     <summary>Возраст и другие фильтры</summary>
@@ -53,18 +58,38 @@
       <button type="button" class="btn btn-primary" id="btnApplyFilters">Применить</button>
     </div>
   </details>
+  <div class="feed-balance" id="feedBalance">Баланс: <strong id="feedBalanceValue">—</strong> (суперлайк −3)</div>
   <div class="card-stack" id="cardStack"></div>
   <div class="feed-actions">
     <button type="button" class="btn-skip" id="btnSkip" title="Пропустить" aria-label="Пропустить">✕</button>
     <button type="button" class="btn-like" id="btnLike" title="Лайк" aria-label="Лайк">♥</button>
+    <button type="button" class="btn-super-like" id="btnSuperLike" title="Суперлайк (3 с баланса)" aria-label="Суперлайк">🔥</button>
   </div>
   <div class="empty-feed" id="emptyFeed" style="display: none;">
     <p>В выбранном районе никого нет.</p>
     <p class="empty-feed-tips">Попробуйте: увеличить радиус, снять галочку «Только реальные» (в блоке «Возраст и другие фильтры»), указать другое место на карте или нажать «Обновить».</p>
     <button type="button" class="btn btn-ghost" id="btnReload">Обновить</button>
   </div>
+  <div class="match-overlay" id="matchOverlay" aria-hidden="true">
+    <div class="match-overlay-backdrop"></div>
+    <div class="match-overlay-content">
+      <div class="match-hearts" aria-hidden="true">
+        <span class="match-heart">♥</span>
+        <span class="match-heart">♥</span>
+        <span class="match-heart">♥</span>
+      </div>
+      <h2 class="match-title">Это матч!</h2>
+      <p class="match-subtitle">Взаимная симпатия — можно писать в чат.</p>
+      <div class="match-actions">
+        <button type="button" class="btn btn-primary" id="matchGoToChat">Перейти в чат</button>
+        <button type="button" class="btn btn-ghost" id="matchLater">Позже</button>
+      </div>
+    </div>
+  </div>
 </div>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+{% endblock %}
+{% block scripts %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="{{ url_for('static', filename='js/header-stats.js') }}"></script>
 <script src="{{ url_for('static', filename='js/feed.js') }}"></script>
 {% endblock %}

@@ -19,6 +19,20 @@
         {% for e in form.email.errors %}<p class="error">{{ e }}</p>{% endfor %}
       </div>
       <div class="form-group">
+        <label for="birth_date">Дата рождения</label>
+        <input id="birth_date" name="birth_date" type="date" value="{{ form.birth_date.data.strftime('%Y-%m-%d') if form.birth_date.data else '' }}">
+        {% for e in form.birth_date.errors %}<p class="error">{{ e }}</p>{% endfor %}
+      </div>
+      <div class="form-group">
+        <label for="gender">Пол</label>
+        <select id="gender" name="gender">
+          <option value="">—</option>
+          <option value="male" {{ 'selected' if form.gender.data == 'male' else '' }}>Мужской</option>
+          <option value="female" {{ 'selected' if form.gender.data == 'female' else '' }}>Женский</option>
+          <option value="other" {{ 'selected' if form.gender.data == 'other' else '' }}>Другое</option>
+        </select>
+      </div>
+      <div class="form-group">
         <label for="password">Пароль</label>
         <input id="password" name="password" type="password" required minlength="6" autocomplete="new-password">
         {% for e in form.password.errors %}<p class="error">{{ e }}</p>{% endfor %}

@@ -96,10 +96,13 @@ def get_recommendations(
         ]
 
     if interests:
-        iset = set(interests)
+        iset = set(s.strip().lower() for s in interests if s)
         def score(p):
-            pi = set(p.get("interests") or []) if isinstance(p.get("interests"), list) else set()
+            raw = p.get("interests") or []
+            pi = set((str(x).strip().lower() for x in raw)) if isinstance(raw, list) else set()
             return len(pi & iset)
+        # Показывать только тех, у кого есть хотя бы один из выбранных интересов
+        candidates = [p for p in candidates if score(p) > 0]
         candidates.sort(key=score, reverse=True)
     result = candidates[:limit]
     logger.debug("Recommendations for user %s: %d profiles", user_id, len(result))
@@ -112,6 +115,7 @@ def get_recommendations_count(
     age_max: int | None = None,
     gender: str | None = None,
     city: str | None = None,
+    interests: list[str] | None = None,
     only_real: bool = False,
     map_lat: float | None = None,
     map_lon: float | None = None,
@@ -126,6 +130,7 @@ def get_recommendations_count(
             age_max=age_max,
             gender=gender,
             city=city,
+            interests=interests,
             only_real=only_real,
             map_lat=map_lat,
             map_lon=map_lon,

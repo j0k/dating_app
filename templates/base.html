@@ -13,18 +13,33 @@
 </head>
 <body class="{% block body_class %}{% endblock %}">
   <header class="header">
-    <a href="{{ url_for('main.index') }}" class="logo">
-      <span class="logo-icon">🍌</span>
-      <span class="logo-text">Dating App</span>
-    </a>
-    <span class="header-stats">В сети: {{ total_users }}</span>
+    <div class="header-brand">
+      <a href="{{ url_for('main.index') }}" class="logo">
+        <span class="logo-icon">🍌</span>
+        <span class="logo-text">Dating App</span>
+      </a>
+      {% if current_user.is_authenticated and (header_user_name or header_last_match_id or header_user_balance is not none) %}
+      <div class="header-user-line">
+        {% if header_user_name %}<span class="header-user-name">{{ header_user_name }}</span>{% endif %}
+        {% if header_last_match_id %}
+        <a href="{{ url_for('main.chat', match_id=header_last_match_id) }}" class="header-user-chat">Чат с {{ header_last_match_label }}</a>
+        {% endif %}
+        {% if header_user_balance is not none %}<span class="header-user-balance">Баланс: {{ header_user_balance }}</span>{% endif %}
+      </div>
+      {% endif %}
+    </div>
+    <span class="header-stats" data-stats-version="3">
+      Зарегистрировано: <strong>{{ stats_total|default(total_users|default(0)) }}</strong>
+      · Реальных: <strong>{{ stats_real|default(0) }}</strong>
+      · Онлайн: <strong>{{ stats_online|default(0) }}</strong>
+    </span>
     <nav class="nav">
-      <a href="/map">Карта</a>
+      <a href="/map"><span class="nav-emoji">🗺️</span><span class="nav-text">Карта</span></a>
       {% if current_user.is_authenticated %}
-        <a href="{{ url_for('main.feed') }}">Лента</a>
-        <a href="{{ url_for('main.matches') }}">Матчи</a>
-        <a href="{{ url_for('main.cabinet') }}">Кабинет</a>
-        <a href="{{ url_for('auth.logout') }}" class="nav-out">Выйти</a>
+        <a href="{{ url_for('main.feed') }}"><span class="nav-emoji">📋</span><span class="nav-text">Лента</span></a>
+        <a href="{{ url_for('main.matches') }}"><span class="nav-emoji">💕</span><span class="nav-text">Матчи</span></a>
+        <a href="{{ url_for('main.cabinet') }}"><span class="nav-emoji">👤</span><span class="nav-text">Кабинет</span></a>
+        <a href="{{ url_for('auth.logout') }}" class="nav-out"><span class="nav-emoji">🚪</span><span class="nav-text">Выйти</span></a>
       {% else %}
         <a href="{{ url_for('auth.login') }}">Войти</a>
         <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Регистрация</a>
@@ -35,8 +50,9 @@
     {% block content %}{% endblock %}
   </main>
   <footer class="footer">
-    <p>Рекомендации с человеческим подходом · MVP · v{{ app_version }}</p>
+    <p>Рекомендации с человеческим подходом · MVP · v{{ app_version }}{% if release_time %} · {{ release_time }}{% endif %}</p>
   </footer>
+  <script src="{{ url_for('static', filename='js/header-stats.js') }}"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
