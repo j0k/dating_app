@@ -17,8 +17,10 @@ def recommendations():
     try:
         limit_raw = request.args.get("limit", 20, type=int)
         limit = min(max(1, limit_raw or 20), 50)
-        age_min = request.args.get("age_min", type=int)
-        age_max = request.args.get("age_max", type=int)
+        age_min_raw = request.args.get("age_min", type=int)
+        age_max_raw = request.args.get("age_max", type=int)
+        age_min = int(age_min_raw) if age_min_raw is not None else None
+        age_max = int(age_max_raw) if age_max_raw is not None else None
         gender = request.args.get("gender") or None
         city = request.args.get("city") or None
         interests_str = request.args.get("interests")
@@ -62,8 +64,10 @@ def recommendations():
 def recommendations_count():
     """Количество пользователей в выбранном месте и радиусе (те же фильтры)."""
     try:
-        age_min = request.args.get("age_min", type=int)
-        age_max = request.args.get("age_max", type=int)
+        age_min_raw = request.args.get("age_min", type=int)
+        age_max_raw = request.args.get("age_max", type=int)
+        age_min = int(age_min_raw) if age_min_raw is not None else None
+        age_max = int(age_max_raw) if age_max_raw is not None else None
         gender = request.args.get("gender") or None
         city = request.args.get("city") or None
         interests_str = request.args.get("interests")

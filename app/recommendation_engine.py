@@ -3,7 +3,7 @@
 """
 import logging
 import math
-from datetime import date
+from datetime import date, datetime, time
 from bson import ObjectId
 
 from app.db import get_db, oid
@@ -60,16 +60,15 @@ def get_recommendations(
             match["user_id"]["$nin"] = list(viewed | set(test_ids))
 
     if age_min is not None or age_max is not None:
-        if (age_min is not None and age_max is not None) and (age_min <= 18 and age_max >= 999):
-            pass
-        else:
-            today = date.today()
-            if age_max is not None:
-                birth_min = date(today.year - age_max - 1, today.month, today.day)
-                match.setdefault("birth_date", {})["$gte"] = birth_min
-            if age_min is not None:
-                birth_max = date(today.year - age_min, today.month, today.day)
-                match.setdefault("birth_date", {})["$lte"] = birth_max
+        today = date.today()
+        if age_max is not None and age_max < 199:
+            birth_min_date = date(today.year - age_max - 1, today.month, today.day)
+            birth_min = datetime.combine(birth_min_date, time.min)
+            match.setdefault("birth_date", {})["$gte"] = birth_min
+        if age_min is not None:
+            birth_max_date = date(today.year - age_min, today.month, today.day)
+            birth_max = datetime.combine(birth_max_date, time.max)
+            match.setdefault("birth_date", {})["$lte"] = birth_max
     if gender:
         match["gender"] = gender
     if city:

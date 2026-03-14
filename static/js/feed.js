@@ -43,20 +43,32 @@
 
   function ageMaxSliderToAge(sliderPos) {
     if (sliderPos <= 0) return 18;
-    return Math.round(18 * Math.pow(1000 / 18, sliderPos / 100));
+    return Math.round(18 * Math.pow(200 / 18, sliderPos / 100));
   }
   function ageMaxAgeToSlider(age) {
     if (age <= 18) return 0;
-    return Math.round(100 * Math.log(age / 18) / Math.log(1000 / 18));
+    return Math.round(100 * Math.log(age / 18) / Math.log(200 / 18));
+  }
+
+  function getAgeMinVal() {
+    var el = document.getElementById('ageMinInput');
+    if (!el) return parseInt(document.getElementById('ageMin')?.value, 10) || 18;
+    var n = parseInt(el.value, 10);
+    return isNaN(n) ? 18 : Math.max(18, Math.min(200, n));
+  }
+  function getAgeMaxVal() {
+    var el = document.getElementById('ageMaxInput');
+    if (!el) return ageMaxSliderToAge(parseInt(document.getElementById('ageMax')?.value, 10) || 0);
+    var n = parseInt(el.value, 10);
+    return isNaN(n) ? 100 : Math.max(18, Math.min(200, n));
   }
 
   function getQuery() {
     const params = new URLSearchParams();
     params.set('limit', '20');
-    const ageMin = document.getElementById('ageMin')?.value;
-    const ageMaxEl = document.getElementById('ageMax');
-    const ageMax = ageMaxEl ? ageMaxSliderToAge(parseInt(ageMaxEl.value, 10) || 0) : null;
-    if (ageMin) params.set('age_min', ageMin);
+    const ageMin = getAgeMinVal();
+    const ageMax = getAgeMaxVal();
+    if (ageMin != null) params.set('age_min', ageMin);
     if (ageMax != null) params.set('age_max', ageMax);
     const gender = getFilterGender();
     if (gender) params.set('gender', gender);
@@ -77,10 +89,9 @@
 
   function getCountQuery() {
     var p = new URLSearchParams();
-    var ageMin = document.getElementById('ageMin')?.value;
-    var ageMaxEl = document.getElementById('ageMax');
-    var ageMax = ageMaxEl ? ageMaxSliderToAge(parseInt(ageMaxEl.value, 10) || 0) : null;
-    if (ageMin) p.set('age_min', ageMin);
+    var ageMin = getAgeMinVal();
+    var ageMax = getAgeMaxVal();
+    if (ageMin != null) p.set('age_min', ageMin);
     if (ageMax != null) p.set('age_max', ageMax);
     var gender = getFilterGender();
     if (gender) p.set('gender', gender);
@@ -274,37 +285,74 @@
     });
   }
 
-  (function initAgeSliders() {
+  (function initAgeControls() {
     var ageMinEl = document.getElementById('ageMin');
     var ageMaxEl = document.getElementById('ageMax');
-    var ageMinVal = document.getElementById('ageMinValue');
-    var ageMaxVal = document.getElementById('ageMaxValue');
-    function getAgeMaxReal() {
-      return ageMaxSliderToAge(parseInt(ageMaxEl.value, 10) || 0);
+    var ageMinInput = document.getElementById('ageMinInput');
+    var ageMaxInput = document.getElementById('ageMaxInput');
+    var AGE_MIN = 18, AGE_MAX = 200;
+
+    function clampMin(v) { return Math.max(AGE_MIN, Math.min(AGE_MAX, parseInt(v, 10) || AGE_MIN)); }
+    function clampMax(v) { return Math.max(AGE_MIN, Math.min(AGE_MAX, parseInt(v, 10) || 100)); }
+
+    function syncMinFromInput() {
+      var v = clampMin(ageMinInput.value);
+      ageMinInput.value = v;
+      if (ageMinEl) ageMinEl.value = Math.min(100, v);
+      var maxV = getAgeMaxVal();
+      if (v > maxV) { ageMaxInput.value = v; if (ageMaxEl) ageMaxEl.value = String(ageMaxAgeToSlider(v)); }
+      updateMapCount();
     }
-    function onAgeMinInput() {
-      var min = parseInt(ageMinEl.value, 10);
-      var maxReal = getAgeMaxReal();
-      if (min > maxReal) {
-        ageMaxEl.value = String(ageMaxAgeToSlider(min));
-        if (ageMaxVal) ageMaxVal.textContent = min;
-      }
-      if (ageMinVal) ageMinVal.textContent = ageMinEl.value;
+    function syncMaxFromInput() {
+      var v = clampMax(ageMaxInput.value);
+      ageMaxInput.value = v;
+      if (ageMaxEl) ageMaxEl.value = String(ageMaxAgeToSlider(v));
+      var minV = getAgeMinVal();
+      if (v < minV) { ageMinInput.value = v; if (ageMinEl) ageMinEl.value = String(Math.min(100, v)); }
+      updateMapCount();
     }
-    function onAgeMaxInput() {
-      var min = parseInt(ageMinEl.value, 10);
-      var maxReal = getAgeMaxReal();
-      if (maxReal < min) {
-        ageMinEl.value = String(maxReal);
-        if (ageMinVal) ageMinVal.textContent = maxReal;
-      }
-      if (ageMaxVal) ageMaxVal.textContent = maxReal;
+    function syncMinFromSlider() {
+      var v = parseInt(ageMinEl.value, 10) || AGE_MIN;
+      ageMinInput.value = v;
+      updateMapCount();
     }
-    if (ageMinEl) { ageMinEl.addEventListener('input', onAgeMinInput); ageMinVal.textContent = ageMinEl.value; }
-    if (ageMaxEl) {
-      ageMaxEl.addEventListener('input', onAgeMaxInput);
-      if (ageMaxVal) ageMaxVal.textContent = getAgeMaxReal();
+    function syncMaxFromSlider() {
+      var v = ageMaxSliderToAge(parseInt(ageMaxEl.value, 10) || 0);
+      ageMaxInput.value = v;
+      updateMapCount();
     }
+
+    if (ageMinInput) {
+      ageMinInput.addEventListener('change', syncMinFromInput);
+      ageMinInput.addEventListener('input', syncMinFromInput);
+    }
+    if (ageMaxInput) {
+      ageMaxInput.addEventListener('change', syncMaxFromInput);
+      ageMaxInput.addEventListener('input', syncMaxFromInput);
+    }
+    if (ageMinEl) ageMinEl.addEventListener('input', syncMinFromSlider);
+    if (ageMaxEl) ageMaxEl.addEventListener('input', syncMaxFromSlider);
+
+    document.getElementById('ageMinMinus')?.addEventListener('click', function () {
+      var v = Math.max(AGE_MIN, getAgeMinVal() - 1);
+      ageMinInput.value = v;
+      syncMinFromInput();
+    });
+    document.getElementById('ageMinPlus')?.addEventListener('click', function () {
+      var v = Math.min(AGE_MAX, getAgeMinVal() + 1);
+      ageMinInput.value = v;
+      syncMinFromInput();
+    });
+    document.getElementById('ageMaxMinus')?.addEventListener('click', function () {
+      var v = Math.max(AGE_MIN, getAgeMaxVal() - 1);
+      ageMaxInput.value = v;
+      syncMaxFromInput();
+    });
+    document.getElementById('ageMaxPlus')?.addEventListener('click', function () {
+      var v = Math.min(AGE_MAX, getAgeMaxVal() + 1);
+      ageMaxInput.value = v;
+      syncMaxFromInput();
+    });
   })();
 
   ['filterGenderMale', 'filterGenderFemale', 'filterGenderOther'].forEach(function (id) {
