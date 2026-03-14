@@ -66,7 +66,7 @@ def my_profile():
             updates["lon"] = float(v) if v is not None else None
         except (TypeError, ValueError):
             updates["lon"] = None
-    _GOALS = ("serious", "dating", "friendship", "open", "unsure")
+    _GOALS = ("serious", "dating", "friendship", "sex", "open", "unsure")
     if "relationship_goal" in data:
         v = data["relationship_goal"]
         updates["relationship_goal"] = v if v in _GOALS else None

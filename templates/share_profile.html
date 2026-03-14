@@ -10,7 +10,7 @@
   </p>
   {% if profile.relationship_goal or profile.relationship_type %}
   <p class="share-meta">
-    {% if profile.relationship_goal == 'serious' %}Серьёзные отношения{% elif profile.relationship_goal == 'dating' %}Знакомства{% elif profile.relationship_goal == 'friendship' %}Дружба{% elif profile.relationship_goal == 'open' %}Открытые отношения{% elif profile.relationship_goal == 'unsure' %}Пока не знаю{% endif %}
+    {% if profile.relationship_goal == 'serious' %}Серьёзные отношения{% elif profile.relationship_goal == 'dating' %}Знакомства{% elif profile.relationship_goal == 'friendship' %}Дружба{% elif profile.relationship_goal == 'sex' %}Секс{% elif profile.relationship_goal == 'open' %}Открытые отношения{% elif profile.relationship_goal == 'unsure' %}Пока не знаю{% endif %}
     {% if profile.relationship_goal and profile.relationship_type %} · {% endif %}
     {% if profile.relationship_type == 'monogamous' %}Моногамия{% elif profile.relationship_type == 'polyamorous' %}Полиамория{% elif profile.relationship_type == 'any' %}Любые{% endif %}
   </p>

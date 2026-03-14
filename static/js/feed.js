@@ -137,7 +137,7 @@
       .then(data => data.profiles || []);
   }
 
-  var goalLabels = { serious: 'Серьёзные', dating: 'Знакомства', friendship: 'Дружба', open: 'Открытые', unsure: 'Пока не знаю' };
+  var goalLabels = { serious: 'Серьёзные', dating: 'Знакомства', friendship: 'Дружба', sex: 'Секс', open: 'Открытые', unsure: 'Пока не знаю' };
   var typeLabels = { monogamous: 'Моногамия', polyamorous: 'Полиамория', any: 'Любые' };
 
   function defaultAvatarUrl(gender) {
