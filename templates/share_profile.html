@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Профиль{% endblock %}
+{% block content %}
+{% if profile %}
+<div class="share-profile-card">
+  <h1 class="page-title">{{ profile.name }}</h1>
+  <p class="share-meta">
+    {% if profile.age %}{{ profile.age }} лет{% endif %}
+    {% if profile.city %}{% if profile.age %} · {% endif %}{{ profile.city }}{% endif %}
+  </p>
+  {% if profile.relationship_goal or profile.relationship_type %}
+  <p class="share-meta">
+    {% if profile.relationship_goal == 'serious' %}Серьёзные отношения{% elif profile.relationship_goal == 'dating' %}Знакомства{% elif profile.relationship_goal == 'friendship' %}Дружба{% elif profile.relationship_goal == 'open' %}Открытые отношения{% elif profile.relationship_goal == 'unsure' %}Пока не знаю{% endif %}
+    {% if profile.relationship_goal and profile.relationship_type %} · {% endif %}
+    {% if profile.relationship_type == 'monogamous' %}Моногамия{% elif profile.relationship_type == 'polyamorous' %}Полиамория{% elif profile.relationship_type == 'any' %}Любые{% endif %}
+  </p>
+  {% endif %}
+  {% if profile.about %}<p class="share-about">{{ profile.about }}</p>{% endif %}
+  {% if profile.interests %}
+  <p class="share-interests">Интересы: {{ profile.interests | join(", ") }}</p>
+  {% endif %}
+  <p class="share-cta"><a href="{{ url_for('main.index') }}" class="btn btn-primary">Перейти на сайт · Зарегистрироваться</a></p>
+</div>
+{% else %}
+<p>Профиль не найден.</p>
+{% endif %}
+{% endblock %}

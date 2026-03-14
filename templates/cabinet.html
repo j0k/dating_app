@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Личный кабинет{% endblock %}
+{% block content %}
+<h1 class="page-title">Личный кабинет</h1>
+<div class="cabinet-section cabinet-invite" style="margin-bottom: 1.5rem;">
+  <h2>Пригласить друзей</h2>
+  <p class="share-desc">Отправьте ссылку — кто зарегистрируется по ней, будет отражён в счётчике ниже.</p>
+  <div class="share-link-row">
+    <input type="text" id="inviteLink" readonly class="share-input" placeholder="Загрузка…">
+    <button type="button" class="btn btn-ghost btn-sm" id="btnCopyInvite">Копировать</button>
+  </div>
+  <p class="invite-count">Приглашённых пользователей: <strong id="inviteReferredCount">—</strong></p>
+</div>
+<div class="cabinet-section cabinet-share" style="margin-bottom: 1.5rem;">
+  <h2>Поделиться профилем</h2>
+  <p class="share-desc">Отправьте ссылку в Telegram или скопируйте и поделитесь с друзьями.</p>
+  <div class="share-link-row">
+    <input type="text" id="profileShareUrl" readonly value="{{ request.url_root.rstrip('/') }}/share/{{ current_user.id }}" class="share-input">
+    <button type="button" class="btn btn-ghost btn-sm" id="btnCopyLink">Копировать</button>
+    <a href="#" id="btnShareTg" class="btn btn-primary btn-sm" target="_blank" rel="noopener">Поделиться в Telegram</a>
+  </div>
+</div>
+<div class="cabinet-grid">
+  <div class="cabinet-section">
+    <h2>Мой профиль</h2>
+    <form id="profileForm">
+      <div class="form-group">
+        <label for="name">Имя</label>
+        <input id="name" name="name" type="text" maxlength="100" required>
+      </div>
+      <div class="form-group">
+        <label for="birth_date">Дата рождения</label>
+        <input id="birth_date" name="birth_date" type="date">
+      </div>
+      <div class="form-group">
+        <label for="gender">Пол</label>
+        <select id="gender" name="gender">
+          <option value="">—</option>
+          <option value="male">Мужской</option>
+          <option value="female">Женский</option>
+          <option value="other">Другое</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="city">Город</label>
+        <input id="city" name="city" type="text" maxlength="100">
+      </div>
+      <div class="form-group">
+        <label for="about">О себе</label>
+        <textarea id="about" name="about" rows="4" maxlength="2000"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="interests">Интересы (через запятую)</label>
+        <input id="interests" name="interests" type="text" maxlength="500" placeholder="музыка, путешествия, кофе">
+      </div>
+      <div class="form-group">
+        <label for="relationship_goal">Цель отношений</label>
+        <select id="relationship_goal" name="relationship_goal">
+          <option value="">—</option>
+          <option value="serious">Серьёзные отношения</option>
+          <option value="dating">Знакомства, общение</option>
+          <option value="friendship">Дружба</option>
+          <option value="open">Открытые отношения</option>
+          <option value="unsure">Пока не знаю</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="relationship_type">Формат отношений</label>
+        <select id="relationship_type" name="relationship_type">
+          <option value="">—</option>
+          <option value="monogamous">Моногамные</option>
+          <option value="polyamorous">Полиаморные</option>
+          <option value="any">Любые</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label><input type="checkbox" id="is_visible" name="is_visible" checked> Показывать в рекомендациях</label>
+      </div>
+      <div class="form-group map-picker-wrap">
+        <label>Местоположение на карте</label>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Кликните на карте, чтобы указать себя. Так вас увидят на главной странице.</p>
+        <input type="hidden" id="lat" name="lat">
+        <input type="hidden" id="lon" name="lon">
+        <div id="mapPicker"></div>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnClearMap" style="margin-top: 0.5rem;">Убрать с карты</button>
+      </div>
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+    </form>
+  </div>
+  <div class="cabinet-section">
+    <h2>Фильтры для ленты</h2>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Настройки по умолчанию для подборки. Можно менять и в ленте.</p>
+    <div class="form-group">
+      <label>Возраст: от – до</label>
+      <div style="display: flex; gap: 0.5rem;">
+        <input type="number" id="defAgeMin" placeholder="18" min="18" max="100" style="width: 80px;">
+        <input type="number" id="defAgeMax" placeholder="99" min="18" max="100" style="width: 80px;">
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="defGender">Пол</label>
+      <select id="defGender">
+        <option value="">Любой</option>
+        <option value="male">Мужской</option>
+        <option value="female">Женский</option>
+        <option value="other">Другое</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="defCity">Город</label>
+      <input type="text" id="defCity" placeholder="Оставить пустым для любого">
+    </div>
+  </div>
+</div>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="{{ url_for('static', filename='js/cabinet.js') }}"></script>
+<script src="{{ url_for('static', filename='js/cabinet-map.js') }}"></script>
+{% endblock %}

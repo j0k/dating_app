@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}Dating App{% endblock %} — Рекомендации с человеческим подходом</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <header class="header">
+    <a href="{{ url_for('main.index') }}" class="logo">
+      <span class="logo-icon">🍌</span>
+      <span class="logo-text">Dating App</span>
+    </a>
+    <span class="header-stats">В сети: {{ total_users }}</span>
+    <nav class="nav">
+      <a href="/map">Карта</a>
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('main.feed') }}">Лента</a>
+        <a href="{{ url_for('main.matches') }}">Матчи</a>
+        <a href="{{ url_for('main.cabinet') }}">Кабинет</a>
+        <a href="{{ url_for('auth.logout') }}" class="nav-out">Выйти</a>
+      {% else %}
+        <a href="{{ url_for('auth.login') }}">Войти</a>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Регистрация</a>
+      {% endif %}
+    </nav>
+  </header>
+  <main class="main">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="footer">
+    <p>Рекомендации с человеческим подходом · MVP · v{{ app_version }}</p>
+  </footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

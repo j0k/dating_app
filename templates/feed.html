@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Лента{% endblock %}
+{% block content %}
+<div class="feed-container">
+  <div class="feed-flow">
+    <p class="feed-flow-step">1. Кого ищете?</p>
+    <div class="feed-flow-row">
+      <select id="filterGender">
+        <option value="">Все</option>
+        <option value="male">Мужчин</option>
+        <option value="female">Женщин</option>
+      </select>
+    </div>
+    <p class="feed-flow-step">2. Где вы? Кликните на карте — появится метка «вы». Или нажмите «Я здесь».</p>
+    <input type="hidden" id="feedMapCenterLat" value="">
+    <input type="hidden" id="feedMapCenterLon" value="">
+    <div id="feedMap" class="feed-map feed-map-big"></div>
+    <p class="feed-map-count" id="feedMapCountWrap">В этом районе: <strong id="feedMapCount">—</strong> человек</p>
+    <div class="feed-map-actions">
+      <button type="button" class="btn btn-ghost btn-sm" id="btnMyLocation">Я здесь</button>
+      <span class="feed-flow-step">3. Радиус поиска:</span>
+      <select id="mapRadius">
+        <option value="25">25 км</option>
+        <option value="50" selected>50 км</option>
+        <option value="100">100 км</option>
+        <option value="200">200 км</option>
+        <option value="500">500 км</option>
+      </select>
+      <input type="hidden" id="mapRadiusKm" value="50">
+      <button type="button" class="btn btn-primary btn-search-main" id="btnSearchMain">Искать</button>
+    </div>
+    <p class="feed-flow-hint">После «Искать» на карте появятся люди (♂ мужчины, ♀ женщины), ниже — карточки.</p>
+  </div>
+  <details class="feed-filters-details">
+    <summary>Возраст и другие фильтры</summary>
+    <div class="filters-bar">
+      <div class="filter-age">
+        <label>Возраст:</label>
+        <span class="filter-age-row">
+          <span class="filter-age-label">от</span>
+          <input type="range" id="ageMin" min="18" max="100" value="18" class="filter-age-slider">
+          <span id="ageMinValue" class="filter-age-value">18</span>
+        </span>
+        <span class="filter-age-row">
+          <span class="filter-age-label">до</span>
+          <input type="range" id="ageMax" min="18" max="100" value="100" class="filter-age-slider">
+          <span id="ageMaxValue" class="filter-age-value">100</span>
+        </span>
+      </div>
+      <label class="filter-checkbox">
+        <input type="checkbox" id="onlyReal" name="only_real"> Только реальные
+      </label>
+      <button type="button" class="btn btn-primary" id="btnApplyFilters">Применить</button>
+    </div>
+  </details>
+  <div class="card-stack" id="cardStack"></div>
+  <div class="feed-actions">
+    <button type="button" class="btn-skip" id="btnSkip" title="Пропустить" aria-label="Пропустить">✕</button>
+    <button type="button" class="btn-like" id="btnLike" title="Лайк" aria-label="Лайк">♥</button>
+  </div>
+  <div class="empty-feed" id="emptyFeed" style="display: none;">
+    <p>В выбранном районе никого нет.</p>
+    <p class="empty-feed-tips">Попробуйте: увеличить радиус, снять галочку «Только реальные» (в блоке «Возраст и другие фильтры»), указать другое место на карте или нажать «Обновить».</p>
+    <button type="button" class="btn btn-ghost" id="btnReload">Обновить</button>
+  </div>
+</div>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="{{ url_for('static', filename='js/feed.js') }}"></script>
+{% endblock %}

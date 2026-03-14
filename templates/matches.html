@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Матчи{% endblock %}
+{% block content %}
+<h1 class="page-title">Матчи</h1>
+<div class="matches-list" id="matchesList"></div>
+<p class="empty-feed" id="emptyMatches" style="display: none;">Пока нет матчей. Ставьте лайки в ленте — при взаимном лайке здесь появится чат.</p>
+<script src="{{ url_for('static', filename='js/matches.js') }}"></script>
+{% endblock %}

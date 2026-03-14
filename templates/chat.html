@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Чат{% endblock %}
+{% block content %}
+<div class="chat-layout">
+  <div class="chat-panel" style="grid-column: 1 / -1;">
+    <div class="chat-header" id="chatHeader">Загрузка…</div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-typing" id="chatTyping" style="display: none;">печатает…</div>
+    <div class="chat-icebreakers" id="chatIcebreakers">
+      <span class="chat-icebreakers-label">Начать разговор:</span>
+      <button type="button" class="btn btn-icebreaker" data-text="Привет! Как дела?">Привет! Как дела?</button>
+      <button type="button" class="btn btn-icebreaker" data-text="Чем занимаешься в свободное время?">Чем занимаешься?</button>
+      <button type="button" class="btn btn-icebreaker" data-text="Какой у тебя план на выходные?">План на выходные?</button>
+      <button type="button" class="btn btn-icebreaker" data-text="Расскажи о себе в двух словах">Расскажи о себе</button>
+    </div>
+    <div class="chat-form">
+      <form id="chatForm">
+        <input type="text" id="messageInput" placeholder="Сообщение..." maxlength="2000" autocomplete="off">
+        <button type="submit" class="btn btn-primary">Отправить</button>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+  window.MATCH_ID = {{ match_id|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}
