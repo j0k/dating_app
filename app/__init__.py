@@ -104,9 +104,14 @@ def create_app(config_name: str | None = None) -> Flask:
             pass
         try:
             db = get_db(app.config)
-            real_name = "Сальто"
-            n = db.profiles.count_documents({"name": real_name})
-            stats_real = n
+            # Реальные пользователи: профили с именем, указанной датой рождения и включённой видимостью
+            stats_real = db.profiles.count_documents(
+                {
+                    "is_visible": {"$ne": False},
+                    "name": {"$nin": [None, ""]},
+                    "birth_date": {"$ne": None},
+                }
+            )
         except Exception:
             pass
         try:
